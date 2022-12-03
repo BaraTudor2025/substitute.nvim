@@ -18,6 +18,8 @@ function substitute.operator(options)
   options = options or {}
   substitute.state.register = options.register or vim.v.register
   substitute.state.count = options.count or (vim.v.count > 0 and vim.v.count or 1)
+  substitute.state.yank = options.yank
+
   vim.o.operatorfunc = "v:lua.require'substitute'.operator_callback"
   vim.api.nvim_feedkeys("g@" .. (options.motion or ""), "i", false)
 end
@@ -33,8 +35,16 @@ function substitute.operator_callback(vmode)
 
   utils.substitute_text(0, marks.start, marks.finish, vmode, replacement, regtype)
 
-  if config.options.yank_substituted_text then
-    vim.fn.setreg(utils.get_default_register(), table.concat(substitued_text, "\n"), utils.get_register_type(vmode))
+  local to_reg = config.options.yank_substituted_to_register
+  if to_reg then
+    vim.fn.setreg(to_reg, table.concat(substitued_text, "\n"), utils.get_register_type(vmode))
+  end
+  if config.options.yank_substituted_text or substitute.state.yank then
+    local reg = utils.get_default_register()
+    if type(substitute.state.yank) == "string" then
+      reg = substitute.state.yank
+    end
+    vim.fn.setreg(reg, table.concat(substitued_text, "\n"), utils.get_register_type(vmode))
   end
 
   if config.options.on_substitute ~= nil then
@@ -43,6 +53,7 @@ function substitute.operator_callback(vmode)
       register = substitute.state.register,
       count = substitute.state.count,
       vmode = vmode,
+      -- text = table.concat(substituted_text, "\n"),
     })
   end
 end

@@ -6,6 +6,7 @@ function config.setup(options)
   local default_values = {
     on_substitute = nil,
     yank_substituted_text = false,
+    yank_substituted_to_register = nil,
     range = {
       prefix = "s",
       prompt_current_text = false,
